@@ -78,19 +78,8 @@ element={
 />
 
 <Route
-
 path="/blog"
-
-element={
-
-<ProtectedRoute>
-
-<Dashboard/>
-
-</ProtectedRoute>
-
-}
-
+element={<Dashboard/>}
 />
 
 </Routes>

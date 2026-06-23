@@ -1,13 +1,11 @@
 import React, { useState } from "react";
 import axios from "./api/axios";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 function Login() {
 
 const [email, setEmail] = useState("");
 const [password, setPassword] = useState("");
-
-const navigate = useNavigate();
 
 const login = async () => {
 
@@ -26,20 +24,25 @@ password
 }
 );
 
+// Save user token
 localStorage.setItem(
-"token",
-res.data.token
+"blogUser",
+JSON.stringify({
+token: res.data.token
+})
 );
 
 alert("Login Successful");
 
-navigate("/blog");
+// force redirect
+window.location.href = "/blog";
 
 } catch (error) {
 
+console.log(error);
+
 alert(
-error?.response?.data?.message
-||
+error?.response?.data?.message ||
 "Login Failed"
 );
 
@@ -51,11 +54,10 @@ return (
 
 <div
 style={{
-minHeight:"100vh",
-display:"flex",
-justifyContent:"center",
-alignItems:"center",
-
+minHeight: "100vh",
+display: "flex",
+justifyContent: "center",
+alignItems: "center",
 background:
 "linear-gradient(180deg,#eef2ff,#ffffff)"
 }}
@@ -63,10 +65,10 @@ background:
 
 <div
 style={{
-width:"450px",
-padding:"50px",
-background:"#fff",
-borderRadius:"25px",
+width: "450px",
+padding: "50px",
+background: "#fff",
+borderRadius: "25px",
 boxShadow:
 "0 20px 60px rgba(0,0,0,.12)"
 }}
@@ -74,8 +76,8 @@ boxShadow:
 
 <h1
 style={{
-textAlign:"center",
-color:"#4f46e5"
+textAlign: "center",
+color: "#4f46e5"
 }}
 >
 📝 BlogSpace
@@ -113,11 +115,13 @@ padding:"16px",
 marginTop:"20px",
 background:"#4f46e5",
 color:"white",
-border:"none"
+border:"none",
+cursor:"pointer"
 }}
+
 >
-Login
-</button>
+
+Login </button>
 
 <p
 style={{

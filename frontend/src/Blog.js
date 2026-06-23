@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-
-import axios from "./api/axios"
+import axios from "./api/axios";
 
 function Blog() {
 
@@ -11,17 +10,25 @@ const [posts,setPosts]=useState([]);
 const [search,setSearch]=useState("");
 const [editingId,setEditingId]=useState(null);
 const [comment,setComment]=useState("");
-const navigate =
-useNavigate();
+
+const navigate=useNavigate();
+
+const getToken=()=>{
+
+const user=
+JSON.parse(
+localStorage.getItem("blogUser")
+);
+
+return user?.token;
+
+};
+
 useEffect(()=>{
 
-const token=
-localStorage.getItem("token");
-
-if(!token){
+if(!getToken()){
 
 window.location.href="/";
-
 return;
 
 }
@@ -35,11 +42,13 @@ const fetchPosts=async()=>{
 try{
 
 const res=
-await axios.get(
-"http://localhost:5000/api/posts"
-);
+await axios.get("/posts");
 
-setPosts(res.data);
+setPosts(
+Array.isArray(res.data)
+? res.data
+: []
+);
 
 }catch{
 
@@ -49,43 +58,43 @@ alert("Unable to load posts");
 
 };
 
+const authHeader=()=>({
+
+headers:{
+Authorization:
+`Bearer ${getToken()}`
+}
+
+});
+
 const createPost=async()=>{
 
 if(!title || !content){
 
 alert("Fill all fields");
-
 return;
 
 }
 
 try{
 
-const token=
-localStorage.getItem("token");
-
 await axios.post(
 
-"http://localhost:5000/api/posts",
+"/posts",
 
 {
 title,
 content
 },
 
-{
-headers:{
-Authorization:`Bearer ${token}`
-}
-}
+authHeader()
 
 );
 
-alert("Post Published");
-
 setTitle("");
-
 setContent("");
+
+alert("Post Published");
 
 fetchPosts();
 
@@ -101,23 +110,16 @@ const updatePost=async()=>{
 
 try{
 
-const token=
-localStorage.getItem("token");
-
 await axios.put(
 
-`http://localhost:5000/api/posts/${editingId}`,
+`/posts/${editingId}`,
 
 {
 title,
 content
 },
 
-{
-headers:{
-Authorization:`Bearer ${token}`
-}
-}
+authHeader()
 
 );
 
@@ -126,7 +128,6 @@ alert("Updated");
 setEditingId(null);
 
 setTitle("");
-
 setContent("");
 
 fetchPosts();
@@ -143,22 +144,13 @@ const deletePost=async(id)=>{
 
 try{
 
-const token=
-localStorage.getItem("token");
-
 await axios.delete(
 
-`http://localhost:5000/api/posts/${id}`,
+`/posts/${id}`,
 
-{
-headers:{
-Authorization:`Bearer ${token}`
-}
-}
+authHeader()
 
 );
-
-alert("Deleted");
 
 fetchPosts();
 
@@ -169,14 +161,13 @@ alert("Delete failed");
 }
 
 };
-const likePost = async(id)=>{
+
+const likePost=async(id)=>{
 
 try{
 
 await axios.put(
-
-`http://localhost:5000/api/posts/like/${id}`
-
+`/posts/like/${id}`
 );
 
 fetchPosts();
@@ -188,13 +179,21 @@ alert("Like failed");
 }
 
 };
-const addComment = async(id)=>{
+
+const addComment=async(id)=>{
+
+if(!comment){
+
+alert("Enter comment");
+return;
+
+}
 
 try{
 
 await axios.put(
 
-`http://localhost:5000/api/posts/comment/${id}`,
+`/posts/comment/${id}`,
 
 {
 text:comment
@@ -208,113 +207,89 @@ fetchPosts();
 
 }catch{
 
-alert(
-"Comment failed"
-);
+alert("Comment failed");
 
 }
 
 };
+
 const logout=()=>{
 
-localStorage.removeItem("token");
+localStorage.removeItem(
+"blogUser"
+);
 
 window.location.href="/";
 
 };
 
 const filteredPosts=
-posts.filter((post)=>
+posts.filter(
 
-post.title
+(post)=>
+
+(post.title || "")
 .toLowerCase()
-.includes(search.toLowerCase())
+.includes(
+search.toLowerCase()
+)
 
 ||
 
-post.content
+(post.content || "")
 .toLowerCase()
-.includes(search.toLowerCase())
+.includes(
+search.toLowerCase()
+)
 
 );
 
 return(
 
 <div
-
 style={{
-
 minHeight:"100vh",
-
 padding:"50px",
-
-background:`
-radial-gradient(circle at 0% 0%,rgba(79,70,229,.45),transparent 38%),
-radial-gradient(circle at 100% 100%,rgba(99,102,241,.35),transparent 42%),
-linear-gradient(180deg,#dbeafe,#ffffff)
-`
-
+background:
+"linear-gradient(180deg,#eef2ff,#ffffff)"
 }}
-
 >
 
 <div
-
 style={{
-
 display:"flex",
-
 justifyContent:"space-between",
-
 alignItems:"center"
-
 }}
-
 >
 
 <div>
 
 <h1
-
 style={{
-
 fontSize:"48px",
-
-color:"#4f46e5",
-
-marginBottom:"0"
-
+color:"#4f46e5"
 }}
-
 >
 
 ✨ BlogSpace
 
 </h1>
 
-<p>Think. Create.</p>
+<p>
+Think. Create.
+</p>
 
 </div>
 
 <button
-
 onClick={logout}
-
 style={{
-
-padding:"14px 22px",
-
-background:
-"linear-gradient(90deg,#ef4444,#dc2626)",
-
-color:"#fff",
-
+padding:"14px 24px",
+background:"#ef4444",
+color:"white",
 border:"none",
-
-borderRadius:"14px",
-
-cursor:"pointer"
-
+borderRadius:"14px"
 }}
 
 >
@@ -326,122 +301,57 @@ Logout
 </div>
 
 <div
-
 style={{
-
-marginTop:"50px",
-
-background:
-"rgba(255,255,255,.65)",
-
+marginTop:"40px",
+background:"white",
 padding:"35px",
-
-borderRadius:"28px",
-
-backdropFilter:"blur(20px)"
-
+borderRadius:"25px"
 }}
-
 >
 
 <input
-
 placeholder="🔍 Search posts"
-
 value={search}
-
 onChange={(e)=>
 setSearch(
 e.target.value
-)
-}
-
+)}
 style={{
-
 width:"100%",
-
 padding:"16px",
-
-borderRadius:"14px",
-
-border:"1px solid #ddd",
-
-marginBottom:"25px"
-
+marginBottom:"20px"
 }}
-
 />
 
-<h2>
-
-{
-editingId
-?
-"Edit Post"
-:
-"Create Post"
-}
-
-</h2>
-
 <input
-
 placeholder="Title"
-
 value={title}
-
 onChange={(e)=>
 setTitle(
 e.target.value
-)
-}
-
+)}
 style={{
-
 width:"100%",
-
-padding:"18px",
-
-borderRadius:"14px",
-
-marginBottom:"15px",
-
-border:"1px solid #ddd"
-
+padding:"16px",
+marginBottom:"15px"
 }}
-
 />
 
 <textarea
-
-placeholder="Content"
-
+placeholder="Write content..."
 value={content}
-
 onChange={(e)=>
 setContent(
 e.target.value
-)
-}
-
+)}
 style={{
-
 width:"100%",
-
-height:"150px",
-
-padding:"18px",
-
-borderRadius:"14px",
-
-border:"1px solid #ddd"
-
+height:"140px",
+padding:"16px"
 }}
-
 />
 
 <button
-
 onClick={
 editingId
 ?
@@ -449,26 +359,14 @@ updatePost
 :
 createPost
 }
-
 style={{
-
 marginTop:"20px",
-
-padding:"16px 28px",
-
-background:
-"linear-gradient(90deg,#6366f1,#4f46e5)",
-
-color:"#fff",
-
+padding:"16px",
+background:"#4f46e5",
+color:"white",
 border:"none",
-
-borderRadius:"14px",
-
-cursor:"pointer"
-
+borderRadius:"12px"
 }}
-
 >
 
 {
@@ -484,57 +382,26 @@ editingId
 </div>
 
 <div
-
 style={{
-
-marginTop:"40px",
-
+marginTop:"35px",
 display:"grid",
-
-gridTemplateColumns:
-"repeat(auto-fit,minmax(320px,1fr))",
-
-gap:"24px"
-
+gap:"20px"
 }}
-
 >
 
 {
 
-filteredPosts.map((post)=>(
+filteredPosts.map(
+(post)=>(
 
 <div
-
 key={post._id}
-
-onClick={()=>
-navigate(
-`/post/${post._id}`
-)
-}
-
 style={{
-cursor:"pointer"
+background:"white",
+padding:"25px",
+borderRadius:"20px"
 }}
-
 >
-
-<div
-
-style={{
-
-color:"#6366f1",
-
-fontWeight:"700"
-
-}}
-
->
-
-FEATURED
-
-</div>
 
 <h2>
 
@@ -550,40 +417,32 @@ FEATURED
 
 <p>
 
-👤 {post.author?.name}
+👤
+{" "}
+{post.author?.name}
 
 </p>
+
 <p>
 
-❤️ {post.likes || 0}
+❤️
+{" "}
+{post.likes || 0}
 
 </p>
 
 <button
-
 onClick={()=>
-likePost(post._id)
-}
-
+likePost(
+post._id
+)}
 >
 
 Like
 
 </button>
-<div
-
-style={{
-
-display:"flex",
-
-gap:"10px"
-
-}}
-
->
 
 <button
-
 onClick={()=>{
 
 setEditingId(
@@ -599,21 +458,6 @@ post.content
 );
 
 }}
-
-style={{
-
-padding:"10px 18px",
-
-background:"#4f46e5",
-
-color:"#fff",
-
-border:"none",
-
-borderRadius:"10px"
-
-}}
-
 >
 
 Edit
@@ -621,57 +465,43 @@ Edit
 </button>
 
 <button
-
 onClick={()=>
 deletePost(
 post._id
-)
-}
-
-style={{
-
-padding:"10px 18px",
-
-background:"#ef4444",
-
-color:"#fff",
-
-border:"none",
-
-borderRadius:"10px"
-
-}}
-
+)}
 >
 
 Delete
 
 </button>
-<br/>
-<br/>
+
+<button
+onClick={()=>
+navigate(
+`/post/${post._id}`
+)}
+>
+
+Open
+
+</button>
+
+<br/><br/>
 
 <input
-
 placeholder="Add comment"
-
 value={comment}
-
 onChange={(e)=>
 setComment(
 e.target.value
-)
-}
-
+)}
 />
 
 <button
-
 onClick={()=>
 addComment(
 post._id
-)
-}
-
+)}
 >
 
 Comment
@@ -681,7 +511,6 @@ Comment
 {
 
 post.comments?.map(
-
 (c,index)=>(
 
 <p key={index}>
@@ -695,11 +524,12 @@ post.comments?.map(
 )
 
 }
-</div>
 
 </div>
 
-))
+)
+
+)
 
 }
 
